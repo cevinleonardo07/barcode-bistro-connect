@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { getMenuItems, getMenuCategories, getTables, createOrder, updateOrderSta
 import { MenuItem, OrderItem, OrderStatus, Table } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Minus, Trash2, Receipt, CheckCircle, X } from 'lucide-react';
+import ManualOrderDialog from '@/components/ManualOrderDialog';
 
 const Cashier = () => {
   const { toast } = useToast();
@@ -138,12 +138,43 @@ const Cashier = () => {
     }
   };
 
+  // Handle manual order creation
+  const handleCreateManualOrder = (tableNumber: number, items: OrderItem[]) => {
+    try {
+      const order = createOrder(tableNumber, items);
+      
+      toast({
+        title: "Order placed successfully",
+        description: `Order for Table ${tableNumber} has been sent to the kitchen`,
+        variant: "default",
+      });
+      
+      // Update tables
+      setTables(getTables());
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to place order",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
       <div className="lg:col-span-2">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Cashier</h1>
-          <p className="text-muted-foreground">Create and manage orders</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Cashier</h1>
+              <p className="text-muted-foreground">Create and manage orders</p>
+            </div>
+            <ManualOrderDialog 
+              tables={tables} 
+              menuItems={menuItems} 
+              onCreateOrder={handleCreateManualOrder} 
+            />
+          </div>
         </div>
         
         <Tabs defaultValue={categories[0]} className="w-full">
