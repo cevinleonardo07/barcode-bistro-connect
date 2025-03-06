@@ -8,13 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getMenuItems, getMenuCategories } from '@/services/mockData';
 import { MenuItem } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import { Edit, Plus, Coffee, Search } from 'lucide-react';
+import { Edit, Plus, Coffee, Search, Filter } from 'lucide-react';
 
 const Menu = () => {
   const { toast } = useToast();
   const [categories, setCategories] = useState<string[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(false);
 
   useEffect(() => {
     // Load menu items and categories
@@ -22,12 +23,23 @@ const Menu = () => {
     setCategories(getMenuCategories());
   }, []);
 
-  const filteredItems = searchTerm
-    ? menuItems.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : menuItems;
+  // Filter menu items by search term and availability
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = !searchTerm || 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAvailability = showOnlyAvailable ? item.available : true;
+    return matchesSearch && matchesAvailability;
+  });
+
+  // Toggle availability filter
+  const toggleAvailabilityFilter = () => {
+    setShowOnlyAvailable(!showOnlyAvailable);
+    toast({
+      description: `Showing ${!showOnlyAvailable ? 'only available' : 'all'} menu items`,
+      duration: 1500,
+    });
+  };
 
   const handleAddItem = () => {
     toast({
@@ -63,9 +75,20 @@ const Menu = () => {
           <h1 className="text-3xl font-bold tracking-tight">Menu Management</h1>
           <p className="text-muted-foreground">Manage your restaurant's menu</p>
         </div>
-        <Button onClick={handleAddItem}>
-          <Plus className="mr-2 h-4 w-4" /> Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={showOnlyAvailable ? "default" : "outline"}
+            size="sm"
+            onClick={toggleAvailabilityFilter}
+            className="flex items-center gap-1"
+          >
+            <Filter className="h-4 w-4" />
+            {showOnlyAvailable ? 'Available Items' : 'All Items'}
+          </Button>
+          <Button onClick={handleAddItem}>
+            <Plus className="mr-2 h-4 w-4" /> Add Item
+          </Button>
+        </div>
       </div>
       
       <div className="mb-6">
@@ -96,6 +119,13 @@ const Menu = () => {
             {filteredItems.length === 0 && (
               <div className="col-span-full text-center py-8 text-muted-foreground">
                 No items found matching "{searchTerm}"
+                {showOnlyAvailable && (
+                  <div className="mt-2">
+                    <Button variant="link" onClick={toggleAvailabilityFilter}>
+                      Show all items
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -114,7 +144,7 @@ const Menu = () => {
             <TabsContent key={category} value={category} className="m-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {menuItems
-                  .filter(item => item.category === category)
+                  .filter(item => item.category === category && (showOnlyAvailable ? item.available : true))
                   .map(item => (
                     <MenuItemCard 
                       key={item.id} 
@@ -123,6 +153,21 @@ const Menu = () => {
                       onToggleAvailability={handleToggleAvailability} 
                     />
                   ))}
+                  
+                {menuItems
+                  .filter(item => item.category === category && (showOnlyAvailable ? item.available : true))
+                  .length === 0 && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                      No available items in this category
+                      {showOnlyAvailable && (
+                        <div className="mt-2">
+                          <Button variant="link" onClick={toggleAvailabilityFilter}>
+                            Show all items
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
               </div>
             </TabsContent>
           ))}

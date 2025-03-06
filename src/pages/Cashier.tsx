@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { getMenuItems, getMenuCategories, getTables, createOrder, updateOrderStatus } from '@/services/mockData';
 import { MenuItem, OrderItem, OrderStatus, Table } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Minus, Trash2, Receipt, CheckCircle, X } from 'lucide-react';
+import { Plus, Minus, Trash2, Receipt, CheckCircle, X, Filter } from 'lucide-react';
 import ManualOrderDialog from '@/components/ManualOrderDialog';
 
 const Cashier = () => {
@@ -18,6 +19,7 @@ const Cashier = () => {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('');
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(true);
 
   useEffect(() => {
     // Get menu items and categories
@@ -31,10 +33,21 @@ const Cashier = () => {
     setTables(getTables());
   }, []);
 
-  // Filter menu items by category
-  const filteredMenuItems = activeCategory 
-    ? menuItems.filter(item => item.category === activeCategory) 
-    : menuItems;
+  // Filter menu items by category and availability
+  const filteredMenuItems = menuItems.filter(item => {
+    const matchesCategory = !activeCategory || item.category === activeCategory;
+    const matchesAvailability = showOnlyAvailable ? item.available : true;
+    return matchesCategory && matchesAvailability;
+  });
+
+  // Toggle availability filter
+  const toggleAvailabilityFilter = () => {
+    setShowOnlyAvailable(!showOnlyAvailable);
+    toast({
+      description: `Showing ${!showOnlyAvailable ? 'only available' : 'all'} menu items`,
+      duration: 1500,
+    });
+  };
 
   // Add item to cart
   const addToCart = (item: MenuItem) => {
@@ -169,11 +182,22 @@ const Cashier = () => {
               <h1 className="text-3xl font-bold tracking-tight">Cashier</h1>
               <p className="text-muted-foreground">Create and manage orders</p>
             </div>
-            <ManualOrderDialog 
-              tables={tables} 
-              menuItems={menuItems} 
-              onCreateOrder={handleCreateManualOrder} 
-            />
+            <div className="flex gap-2">
+              <Button
+                variant={showOnlyAvailable ? "default" : "outline"}
+                size="sm"
+                onClick={toggleAvailabilityFilter}
+                className="flex items-center gap-1"
+              >
+                <Filter className="h-4 w-4" />
+                {showOnlyAvailable ? 'Available Items' : 'All Items'}
+              </Button>
+              <ManualOrderDialog 
+                tables={tables} 
+                menuItems={menuItems} 
+                onCreateOrder={handleCreateManualOrder} 
+              />
+            </div>
           </div>
         </div>
         
@@ -227,6 +251,16 @@ const Cashier = () => {
                     </CardFooter>
                   </Card>
                 ))}
+                {filteredMenuItems.length === 0 && (
+                  <div className="col-span-3 py-10 text-center text-muted-foreground">
+                    No items available in this category. 
+                    {showOnlyAvailable && (
+                      <Button variant="link" onClick={toggleAvailabilityFilter}>
+                        Show all items
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
           ))}
