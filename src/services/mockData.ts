@@ -1,4 +1,3 @@
-
 import { MenuItem, Order, OrderStatus, Table } from "@/types";
 
 // Menu Items
@@ -90,7 +89,80 @@ export const tables: Table[] = [
 ];
 
 // Orders
-export const orders: Order[] = [];
+export const orders: Order[] = [
+  {
+    id: "order-1689231433-123",
+    tableNumber: 1,
+    items: [
+      {
+        id: "item-1689231433-123",
+        menuItemId: "m1",
+        name: "Nasi Goreng Special",
+        price: 45000,
+        quantity: 2
+      },
+      {
+        id: "item-1689231433-124",
+        menuItemId: "m4",
+        name: "Es Teh Manis",
+        price: 10000,
+        quantity: 2
+      }
+    ],
+    status: OrderStatus.COMPLETED,
+    totalAmount: 110000,
+    createdAt: new Date(2023, 10, 15, 12, 30),
+    updatedAt: new Date(2023, 10, 15, 13, 15)
+  },
+  {
+    id: "order-1689231433-124",
+    tableNumber: 3,
+    items: [
+      {
+        id: "item-1689231433-125",
+        menuItemId: "m2",
+        name: "Mie Goreng",
+        price: 40000,
+        quantity: 1
+      },
+      {
+        id: "item-1689231433-126",
+        menuItemId: "m5",
+        name: "Jus Alpukat",
+        price: 18000,
+        quantity: 1
+      }
+    ],
+    status: OrderStatus.PREPARING,
+    totalAmount: 58000,
+    createdAt: new Date(Date.now() - 20 * 60000), // 20 minutes ago
+    updatedAt: new Date(Date.now() - 15 * 60000)
+  },
+  {
+    id: "order-1689231433-125",
+    tableNumber: 5,
+    items: [
+      {
+        id: "item-1689231433-127",
+        menuItemId: "m3",
+        name: "Sate Ayam",
+        price: 35000,
+        quantity: 2
+      },
+      {
+        id: "item-1689231433-128",
+        menuItemId: "m4",
+        name: "Es Teh Manis",
+        price: 10000,
+        quantity: 3
+      }
+    ],
+    status: OrderStatus.NEW,
+    totalAmount: 100000,
+    createdAt: new Date(Date.now() - 5 * 60000), // 5 minutes ago
+    updatedAt: new Date(Date.now() - 5 * 60000)
+  }
+];
 
 // Helper functions to simulate backend operations
 export const getMenuItems = (): MenuItem[] => {
