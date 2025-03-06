@@ -1,10 +1,11 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Home, ChefHat, QrCode, Coffee, Users, Menu, Scan } from 'lucide-react';
 
+// This component is no longer used as we've replaced it with a sidebar
+// It's kept for reference or if we need to revert changes
 const Navbar: React.FC = () => {
   const location = useLocation();
   
@@ -20,8 +21,9 @@ const Navbar: React.FC = () => {
     { name: 'Tables', path: '/tables', icon: <Users className="w-5 h-5 mr-2" /> }
   ];
 
+  // This component is hidden with CSS class hidden
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-100 z-50">
+    <header className="hidden">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="font-semibold text-xl text-primary flex items-center">
