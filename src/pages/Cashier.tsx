@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { getMenuItems, getMenuCategories, getTables, createOrder, updateOrderStatus } from '@/services/mockData';
-import { MenuItem, OrderItem, OrderStatus, Table } from '@/types';
+import { getMenuItems, getMenuCategories, getTables, createOrder } from '@/services/mockData';
+import { MenuItem, OrderItem, Table } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Minus, Trash2, Receipt, CheckCircle, X, Filter } from 'lucide-react';
 import ManualOrderDialog from '@/components/ManualOrderDialog';
+import MenuItemsGrid from '@/components/cashier/MenuItemsGrid';
+import CategoryTabs from '@/components/cashier/CategoryTabs';
+import OrderCart from '@/components/cashier/OrderCart';
+import MenuFilters from '@/components/cashier/MenuFilters';
 
 const Cashier = () => {
   const { toast } = useToast();
@@ -97,11 +95,6 @@ const Cashier = () => {
     setCart(cart.filter(item => item.id !== id));
   };
 
-  // Calculate total
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
   // Clear cart
   const clearCart = () => {
     setCart([]);
@@ -129,7 +122,7 @@ const Cashier = () => {
     }
     
     try {
-      const order = createOrder(selectedTable.number, cart);
+      createOrder(selectedTable.number, cart);
       
       toast({
         title: "Order placed successfully",
@@ -154,7 +147,7 @@ const Cashier = () => {
   // Handle manual order creation
   const handleCreateManualOrder = (tableNumber: number, items: OrderItem[]) => {
     try {
-      const order = createOrder(tableNumber, items);
+      createOrder(tableNumber, items);
       
       toast({
         title: "Order placed successfully",
@@ -183,15 +176,10 @@ const Cashier = () => {
               <p className="text-muted-foreground">Create and manage orders</p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant={showOnlyAvailable ? "default" : "outline"}
-                size="sm"
-                onClick={toggleAvailabilityFilter}
-                className="flex items-center gap-1"
-              >
-                <Filter className="h-4 w-4" />
-                {showOnlyAvailable ? 'Available Items' : 'All Items'}
-              </Button>
+              <MenuFilters 
+                showOnlyAvailable={showOnlyAvailable} 
+                onToggleAvailability={toggleAvailabilityFilter} 
+              />
               <ManualOrderDialog 
                 tables={tables} 
                 menuItems={menuItems} 
@@ -201,166 +189,29 @@ const Cashier = () => {
           </div>
         </div>
         
-        <Tabs defaultValue={categories[0]} className="w-full">
-          <div className="flex justify-between items-center mb-4">
-            <TabsList className="bg-muted/50">
-              {categories.map(category => (
-                <TabsTrigger 
-                  key={category} 
-                  value={category}
-                  onClick={() => setActiveCategory(category)}
-                  className="text-sm"
-                >
-                  {category}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-          
-          {categories.map(category => (
-            <TabsContent key={category} value={category} className="m-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredMenuItems.map(item => (
-                  <Card 
-                    key={item.id} 
-                    className="cursor-pointer card-hover border-none shadow-sm overflow-hidden"
-                    onClick={() => addToCart(item)}
-                  >
-                    {item.image && (
-                      <div className="w-full h-36 overflow-hidden relative">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <CardHeader className="p-4 pb-2">
-                      <CardTitle className="text-lg">{item.name}</CardTitle>
-                      <CardDescription className="h-10 line-clamp-2">{item.description}</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="p-4 pt-0 flex justify-between">
-                      <span className="font-bold">Rp {item.price.toLocaleString()}</span>
-                      <Button size="sm" variant="outline" onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                      }}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-                {filteredMenuItems.length === 0 && (
-                  <div className="col-span-3 py-10 text-center text-muted-foreground">
-                    No items available in this category. 
-                    {showOnlyAvailable && (
-                      <Button variant="link" onClick={toggleAvailabilityFilter}>
-                        Show all items
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+        <CategoryTabs 
+          categories={categories} 
+          activeCategory={activeCategory} 
+          onCategoryChange={setActiveCategory}
+        >
+          <MenuItemsGrid 
+            items={filteredMenuItems} 
+            onAddToCart={addToCart} 
+          />
+        </CategoryTabs>
       </div>
       
       <div className="lg:col-span-1">
-        <Card className="border-none shadow-md sticky top-24 bg-white/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>Current Order</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearCart}
-                disabled={cart.length === 0}
-              >
-                <X className="h-4 w-4 mr-1" /> Clear
-              </Button>
-            </CardTitle>
-            <CardDescription>
-              {selectedTable 
-                ? `Table ${selectedTable.number} (${selectedTable.seats} seats)` 
-                : 'Select a table below'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {tables.map(table => (
-                <Badge
-                  key={table.id}
-                  variant={table.status === 'available' ? 'outline' : 'secondary'}
-                  className={`cursor-pointer px-3 py-2 transition-all ${
-                    selectedTable?.id === table.id ? 'bg-primary text-primary-foreground' : ''
-                  } ${table.status !== 'available' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  onClick={() => {
-                    if (table.status === 'available') {
-                      setSelectedTable(table);
-                    } else {
-                      toast({
-                        description: `Table ${table.number} is ${table.status}`,
-                        variant: "default",
-                      });
-                    }
-                  }}
-                >
-                  {table.number}
-                </Badge>
-              ))}
-            </div>
-            
-            {cart.length > 0 ? (
-              <div className="space-y-4">
-                {cart.map(item => (
-                  <div key={item.id} className="flex items-center justify-between pb-2 border-b">
-                    <div className="flex-1">
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Rp {item.price.toLocaleString()} x {item.quantity}
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, -1)}>
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, 1)}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                No items in order
-              </div>
-            )}
-          </CardContent>
-          
-          {cart.length > 0 && (
-            <CardFooter className="flex-col">
-              <Separator className="mb-4" />
-              <div className="w-full flex justify-between mb-4">
-                <span className="font-medium">Total</span>
-                <span className="font-bold">Rp {calculateTotal().toLocaleString()}</span>
-              </div>
-              <Button 
-                className="w-full"
-                onClick={submitOrder}
-                disabled={cart.length === 0 || !selectedTable}
-              >
-                <Receipt className="mr-2 h-4 w-4" /> Place Order
-              </Button>
-            </CardFooter>
-          )}
-        </Card>
+        <OrderCart 
+          cart={cart}
+          tables={tables}
+          selectedTable={selectedTable}
+          onSelectTable={setSelectedTable}
+          onUpdateQuantity={updateQuantity}
+          onRemoveItem={removeItem}
+          onClearCart={clearCart}
+          onSubmitOrder={submitOrder}
+        />
       </div>
     </div>
   );
