@@ -1,4 +1,4 @@
-import { MenuItem, Order, OrderStatus, Table } from "@/types";
+import { MenuItem, Order, OrderStatus, PaymentMethod, PaymentStatus, Payment, SalesReport, Table } from "@/types";
 
 // Menu Items
 export const menuItems: MenuItem[] = [
@@ -86,6 +86,65 @@ export const tables: Table[] = [
   { id: 6, number: 6, seats: 6, status: "available" },
   { id: 7, number: 7, seats: 8, status: "available" },
   { id: 8, number: 8, seats: 8, status: "available" }
+];
+
+// Mock payment data
+export const payments: Payment[] = [
+  {
+    id: "payment-1",
+    orderId: "order-1689231433-123",
+    amount: 110000,
+    method: PaymentMethod.CASH,
+    status: PaymentStatus.PAID,
+    customerName: "John Doe",
+    createdAt: new Date(2023, 10, 15, 13, 15),
+    updatedAt: new Date(2023, 10, 15, 13, 15)
+  },
+  {
+    id: "payment-2",
+    orderId: "order-1689231433-124",
+    amount: 58000,
+    method: PaymentMethod.BANK_TRANSFER,
+    status: PaymentStatus.PENDING,
+    transactionId: "TRX-12345678",
+    customerName: "Jane Smith",
+    createdAt: new Date(Date.now() - 15 * 60000),
+    updatedAt: new Date(Date.now() - 15 * 60000)
+  },
+  {
+    id: "payment-3",
+    orderId: "order-1689231433-125",
+    amount: 100000,
+    method: PaymentMethod.CREDIT_CARD,
+    status: PaymentStatus.FAILED,
+    transactionId: "TRX-87654321",
+    customerName: "Bob Johnson",
+    createdAt: new Date(Date.now() - 5 * 60000),
+    updatedAt: new Date(Date.now() - 5 * 60000),
+    notes: "Card declined"
+  },
+  {
+    id: "payment-4",
+    orderId: "order-1689231433-126",
+    amount: 75000,
+    method: PaymentMethod.E_WALLET,
+    status: PaymentStatus.PAID,
+    transactionId: "EW-123456",
+    customerName: "Alice Brown",
+    createdAt: new Date(2023, 10, 14, 18, 30),
+    updatedAt: new Date(2023, 10, 14, 18, 30)
+  },
+  {
+    id: "payment-5",
+    orderId: "order-1689231433-127",
+    amount: 120000,
+    method: PaymentMethod.DEBIT_CARD,
+    status: PaymentStatus.PAID,
+    transactionId: "DC-789012",
+    customerName: "Charlie Davis",
+    createdAt: new Date(2023, 10, 14, 12, 45),
+    updatedAt: new Date(2023, 10, 14, 12, 45)
+  }
 ];
 
 // Orders
@@ -255,6 +314,73 @@ export const updateOrderStatus = (id: string, status: OrderStatus): Order | unde
   }
   
   return orders[orderIndex];
+};
+
+// Payment related functions
+export const getPayments = (): Payment[] => {
+  return payments.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+export const getPaymentsByStatus = (status: PaymentStatus): Payment[] => {
+  return payments.filter(payment => payment.status === status)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+export const getPaymentsByMethod = (method: PaymentMethod): Payment[] => {
+  return payments.filter(payment => payment.method === method)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+export const getPaymentsByDateRange = (startDate: Date, endDate: Date): Payment[] => {
+  return payments.filter(payment => {
+    const paymentDate = new Date(payment.createdAt);
+    return paymentDate >= startDate && paymentDate <= endDate;
+  }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+export const getPaymentById = (id: string): Payment | undefined => {
+  return payments.find(payment => payment.id === id);
+};
+
+export const updatePaymentStatus = (id: string, status: PaymentStatus, notes?: string): Payment | undefined => {
+  const paymentIndex = payments.findIndex(payment => payment.id === id);
+  if (paymentIndex === -1) return undefined;
+  
+  payments[paymentIndex] = {
+    ...payments[paymentIndex],
+    status,
+    notes: notes ? notes : payments[paymentIndex].notes,
+    updatedAt: new Date()
+  };
+  
+  return payments[paymentIndex];
+};
+
+export const generateSalesReport = (startDate: Date, endDate: Date): SalesReport => {
+  const relevantPayments = getPaymentsByDateRange(startDate, endDate).filter(p => p.status === PaymentStatus.PAID);
+  
+  const totalRevenue = relevantPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  const transactionCount = relevantPayments.length;
+  
+  const paymentMethodBreakdown = relevantPayments.reduce((acc, payment) => {
+    acc[payment.method] = (acc[payment.method] || 0) + payment.amount;
+    return acc;
+  }, {} as Record<PaymentMethod, number>);
+  
+  // Ensure all payment methods are represented in the breakdown
+  Object.values(PaymentMethod).forEach(method => {
+    if (!paymentMethodBreakdown[method]) {
+      paymentMethodBreakdown[method] = 0;
+    }
+  });
+  
+  return {
+    totalRevenue,
+    paymentMethodBreakdown,
+    periodStart: startDate,
+    periodEnd: endDate,
+    transactionCount
+  };
 };
 
 // Generate QR code URL for a table

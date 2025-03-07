@@ -36,6 +36,7 @@ export interface Order {
   createdAt: Date;
   updatedAt: Date;
   customerId?: string;
+  payment?: Payment;
 }
 
 export interface Table {
@@ -44,4 +45,39 @@ export interface Table {
   seats: number;
   status: "available" | "occupied" | "reserved";
   currentOrderId?: string;
+}
+
+export enum PaymentStatus {
+  PAID = "paid",
+  PENDING = "pending",
+  FAILED = "failed"
+}
+
+export enum PaymentMethod {
+  CASH = "cash",
+  CREDIT_CARD = "credit_card",
+  DEBIT_CARD = "debit_card",
+  BANK_TRANSFER = "bank_transfer",
+  E_WALLET = "e_wallet"
+}
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+  customerName?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  notes?: string;
+}
+
+export interface SalesReport {
+  totalRevenue: number;
+  paymentMethodBreakdown: Record<PaymentMethod, number>;
+  periodStart: Date;
+  periodEnd: Date;
+  transactionCount: number;
 }
