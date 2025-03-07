@@ -11,6 +11,7 @@ import Kitchen from "./pages/Kitchen";
 import Menu from "./pages/Menu";
 import Tables from "./pages/Tables";
 import OrderPage from "./pages/OrderPage";
+import OrderHistory from "./pages/OrderHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/menu" element={<Layout><Menu /></Layout>} />
           <Route path="/tables" element={<Layout><Tables /></Layout>} />
           <Route path="/order/:tableId" element={<OrderPage />} />
+          <Route path="/order-history" element={<Layout><OrderHistory /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -36,4 +38,3 @@ const App = () => (
 );
 
 export default App;
-
