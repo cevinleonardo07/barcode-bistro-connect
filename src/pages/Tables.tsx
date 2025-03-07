@@ -40,7 +40,7 @@ const Tables = () => {
       if (table.status !== 'available') {
         resetCount++;
         updateTableStatus(table.id, 'available');
-        return { ...table, status: 'available' };
+        return { ...table, status: 'available' as const };
       }
       return table;
     });
