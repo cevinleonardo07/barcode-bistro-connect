@@ -34,11 +34,9 @@ const Tables = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleResetUnavailableTables = () => {
-    let resetCount = 0;
+  const handleResetTable = (tableId: number) => {
     const updatedTables = tables.map(table => {
-      if (table.status !== 'available') {
-        resetCount++;
+      if (table.id === tableId) {
         updateTableStatus(table.id, 'available');
         return { ...table, status: 'available' as const };
       }
@@ -48,9 +46,7 @@ const Tables = () => {
     setTables(updatedTables);
     
     toast({
-      description: resetCount > 0 
-        ? `Reset ${resetCount} tables to available status` 
-        : "All tables are already available",
+      description: `Table has been reset to available status`,
     });
   };
 
@@ -99,9 +95,6 @@ const Tables = () => {
           <p className="text-muted-foreground">Manage tables and generate QR codes</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleResetUnavailableTables}>
-            <RefreshCw className="mr-2 h-4 w-4" /> Reset Tables
-          </Button>
           <Button onClick={handleAddTable}>
             <Plus className="mr-2 h-4 w-4" /> Add Table
           </Button>
@@ -132,6 +125,15 @@ const Tables = () => {
                 <Button variant="outline" size="sm" onClick={() => handleGenerateQR(table)}>
                   <QrCode className="mr-2 h-4 w-4" /> Generate QR
                 </Button>
+                {table.status !== 'available' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleResetTable(table.id)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
