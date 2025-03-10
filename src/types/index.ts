@@ -1,4 +1,3 @@
-
 export interface MenuItem {
   id: string;
   name: string;
@@ -7,6 +6,7 @@ export interface MenuItem {
   category: string;
   image?: string;
   available: boolean;
+  outOfStock?: boolean;
 }
 
 export interface OrderItem {
@@ -85,4 +85,3 @@ export interface SalesReport {
   periodEnd: Date;
   transactionCount: number;
 }
-

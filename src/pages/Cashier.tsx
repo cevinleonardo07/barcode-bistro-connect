@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getMenuItems, getMenuCategories, getTables, createOrder } from '@/services/mockData';
 import { MenuItem, OrderItem, Table } from '@/types';
@@ -49,6 +48,15 @@ const Cashier = () => {
 
   // Add item to cart
   const addToCart = (item: MenuItem) => {
+    if (item.outOfStock) {
+      toast({
+        description: `${item.name} is out of stock`,
+        variant: "destructive",
+        duration: 1500,
+      });
+      return;
+    }
+    
     const existingItem = cart.find(cartItem => cartItem.menuItemId === item.id);
     
     if (existingItem) {
@@ -72,6 +80,15 @@ const Cashier = () => {
       description: `Added ${item.name} to order`,
       duration: 1500,
     });
+  };
+
+  // Update menu item
+  const updateMenuItem = (updatedItem: MenuItem) => {
+    setMenuItems(prevItems => 
+      prevItems.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      )
+    );
   };
 
   // Update item quantity
@@ -196,7 +213,8 @@ const Cashier = () => {
         >
           <MenuItemsGrid 
             items={filteredMenuItems} 
-            onAddToCart={addToCart} 
+            onAddToCart={addToCart}
+            onUpdateMenuItem={updateMenuItem}
           />
         </CategoryTabs>
       </div>

@@ -351,6 +351,14 @@ export const getMenuItems = (): MenuItem[] => {
   return menuItems;
 };
 
+export const updateMenuItem = (updatedItem: MenuItem): MenuItem => {
+  const index = menuItems.findIndex(item => item.id === updatedItem.id);
+  if (index !== -1) {
+    menuItems[index] = updatedItem;
+  }
+  return updatedItem;
+};
+
 export const getMenuItemsByCategory = (category: string): MenuItem[] => {
   return menuItems.filter(item => item.category === category);
 };
