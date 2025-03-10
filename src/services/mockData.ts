@@ -546,5 +546,3 @@ export const getOrdersByChef = (chefName: string): Order[] => {
 
 // Generate a helmet element to be added to the page
 import { Helmet } from 'react-helmet';
-<lov-add-dependency>react-helmet@6.1.0</lov-add-dependency>
-<lov-add-dependency>@types/react-helmet@6.1.11</lov-add-dependency>
