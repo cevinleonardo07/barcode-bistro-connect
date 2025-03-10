@@ -1,186 +1,147 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { format } from 'date-fns';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { getOrders, getOrdersByStatus, updateOrderStatus } from '@/services/mockData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Download, FileText, Filter, AlertTriangle } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
-import { Clock, CheckCircle, Utensils, Package, ArrowRight } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { getCompletedAndCancelledOrders } from '@/services/mockData';
+import KitchenHistoryTable from '@/components/kitchen/KitchenHistoryTable';
+import OrderFilters from '@/components/kitchen/OrderFilters';
+import OrderStatusSummary from '@/components/kitchen/OrderStatusSummary';
+import { toast } from '@/hooks/use-toast';
 
-const KitchenHistory = () => {
-  const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [filter, setFilter] = useState<string>('new');
-
-  useEffect(() => {
-    loadOrders();
-  }, [filter]);
-
-  const loadOrders = () => {
-    if (filter === 'all') {
-      setOrders(getOrders());
-    } else {
-      setOrders(getOrdersByStatus(filter as OrderStatus));
-    }
+const KitchenHistory: React.FC = () => {
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>(getCompletedAndCancelledOrders());
+  const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'cancelled'>('all');
+  
+  const completedOrders = filteredOrders.filter(order => order.status === OrderStatus.COMPLETED);
+  const cancelledOrders = filteredOrders.filter(order => order.status === OrderStatus.CANCELLED);
+  
+  const handleExport = (format: 'csv' | 'pdf') => {
+    toast({
+      title: `Export ${format.toUpperCase()} Started`,
+      description: `Your ${format.toUpperCase()} export is being generated and will download shortly.`,
+    });
+    // In a real app, this would trigger the actual export functionality
+    setTimeout(() => {
+      toast({
+        title: `Export Complete`,
+        description: `Your ${format.toUpperCase()} has been exported successfully.`,
+      });
+    }, 2000);
   };
 
-  const getStatusBadge = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.NEW:
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">New</Badge>;
-      case OrderStatus.PREPARING:
-        return <Badge className="bg-orange-100 text-orange-800 border-orange-200">Preparing</Badge>;
-      case OrderStatus.READY:
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Ready</Badge>;
-      case OrderStatus.DELIVERED:
-        return <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">Delivered</Badge>;
-      case OrderStatus.COMPLETED:
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
-      case OrderStatus.CANCELLED:
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const getNextStatus = (currentStatus: OrderStatus) => {
-    switch (currentStatus) {
-      case OrderStatus.NEW:
-        return OrderStatus.PREPARING;
-      case OrderStatus.PREPARING:
-        return OrderStatus.READY;
-      case OrderStatus.READY:
-        return OrderStatus.DELIVERED;
-      case OrderStatus.DELIVERED:
-        return OrderStatus.COMPLETED;
-      default:
-        return currentStatus;
-    }
-  };
-
-  const updateStatus = (orderId: string, currentStatus: OrderStatus) => {
-    const nextStatus = getNextStatus(currentStatus);
-    if (nextStatus !== currentStatus) {
-      const updatedOrder = updateOrderStatus(orderId, nextStatus);
-      if (updatedOrder) {
-        toast({
-          description: `Order #${orderId.slice(-4)} updated to ${nextStatus}`,
-        });
-        loadOrders();
+  const showDelayedOrderNotifications = () => {
+    const delayedOrders = filteredOrders.filter(
+      order => {
+        if (!order.completionTime) return false;
+        const orderTime = new Date(order.createdAt).getTime();
+        const completionTime = new Date(order.completionTime).getTime();
+        const minutesDiff = (completionTime - orderTime) / (1000 * 60);
+        return minutesDiff > 30; // More than 30 minutes
       }
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  const getActionButton = (order: Order) => {
-    if (order.status === OrderStatus.COMPLETED || order.status === OrderStatus.CANCELLED) {
-      return null;
-    }
-
-    const nextStatus = getNextStatus(order.status);
-    let icon = <ArrowRight className="h-4 w-4" />;
-    let label = "Next";
-
-    switch (nextStatus) {
-      case OrderStatus.PREPARING:
-        icon = <Utensils className="h-4 w-4" />;
-        label = "Start Preparing";
-        break;
-      case OrderStatus.READY:
-        icon = <Package className="h-4 w-4" />;
-        label = "Mark Ready";
-        break;
-      case OrderStatus.DELIVERED:
-        icon = <CheckCircle className="h-4 w-4" />;
-        label = "Mark Delivered";
-        break;
-      case OrderStatus.COMPLETED:
-        icon = <CheckCircle className="h-4 w-4" />;
-        label = "Complete";
-        break;
-    }
-
-    return (
-      <Button 
-        size="sm" 
-        className="mt-2" 
-        onClick={() => updateStatus(order.id, order.status)}
-      >
-        {icon}
-        <span className="ml-1">{label}</span>
-      </Button>
     );
+    
+    if (delayedOrders.length > 0) {
+      toast({
+        title: `${delayedOrders.length} Delayed Orders Detected`,
+        description: `${delayedOrders.length} orders took longer than 30 minutes to complete.`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Kitchen History</h1>
-        <p className="text-muted-foreground">Track orders and update their status</p>
+    <>
+      <Helmet>
+        <title>Kitchen History | Bistro Connect</title>
+      </Helmet>
+      
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Kitchen History</h1>
+          <p className="text-muted-foreground mt-1">
+            View and analyze completed and canceled orders
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => handleExport('csv')} 
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button 
+            onClick={() => handleExport('pdf')} 
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button 
+            onClick={showDelayedOrderNotifications} 
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            Show Delayed
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue={OrderStatus.NEW} className="w-full mb-6">
-        <TabsList>
-          <TabsTrigger value={OrderStatus.NEW} onClick={() => setFilter(OrderStatus.NEW)}>
-            New Orders
-          </TabsTrigger>
-          <TabsTrigger value={OrderStatus.PREPARING} onClick={() => setFilter(OrderStatus.PREPARING)}>
-            In Preparation
-          </TabsTrigger>
-          <TabsTrigger value={OrderStatus.READY} onClick={() => setFilter(OrderStatus.READY)}>
-            Ready
-          </TabsTrigger>
-          <TabsTrigger value="all" onClick={() => setFilter('all')}>
-            All Orders
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <OrderStatusSummary 
+          completedCount={completedOrders.length} 
+          cancelledCount={cancelledOrders.length} 
+        />
+      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {orders.length > 0 ? (
-          orders.map((order) => (
-            <Card key={order.id} className="border-none shadow-sm">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">Table {order.tableNumber}</CardTitle>
-                    <CardDescription>
-                      Order Time: {formatTime(order.createdAt)}
-                    </CardDescription>
-                  </div>
-                  <div>{getStatusBadge(order.status)}</div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium mb-1">Items:</h4>
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="font-medium">{item.quantity}x</span>
-                      <span className="flex-1 ml-2">{item.name}</span>
-                      {item.notes && <span className="text-xs text-muted-foreground">{item.notes}</span>}
-                    </div>
-                  ))}
-                </div>
-                {getActionButton(order)}
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No orders found
+      <Card className="mt-6">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xl">Order History</CardTitle>
+          <CardDescription>
+            View all completed and canceled orders
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <OrderFilters 
+              onFiltersChange={setFilteredOrders}
+            />
+            
+            <Tabs defaultValue="all" onValueChange={(v) => setActiveTab(v as any)}>
+              <TabsList>
+                <TabsTrigger value="all">All Orders</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+                <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+              </TabsList>
+              <TabsContent value="all">
+                <KitchenHistoryTable orders={filteredOrders} />
+              </TabsContent>
+              <TabsContent value="completed">
+                <KitchenHistoryTable orders={completedOrders} />
+              </TabsContent>
+              <TabsContent value="cancelled">
+                <KitchenHistoryTable orders={cancelledOrders} />
+              </TabsContent>
+            </Tabs>
           </div>
-        )}
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

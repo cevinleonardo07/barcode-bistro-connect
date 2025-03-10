@@ -13,6 +13,7 @@ import Tables from "./pages/Tables";
 import OrderPage from "./pages/OrderPage";
 import OrderHistory from "./pages/OrderHistory";
 import Payments from "./pages/Payments";
+import KitchenHistory from "./pages/KitchenHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/order/:tableId" element={<OrderPage />} />
           <Route path="/order-history" element={<Layout><OrderHistory /></Layout>} />
           <Route path="/payments" element={<Layout><Payments /></Layout>} />
+          <Route path="/kitchen-history" element={<Layout><KitchenHistory /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

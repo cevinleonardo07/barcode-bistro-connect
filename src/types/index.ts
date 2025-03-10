@@ -37,6 +37,10 @@ export interface Order {
   updatedAt: Date;
   customerId?: string;
   payment?: Payment;
+  completionTime?: Date;
+  assignedChef?: string;
+  preparationNotes?: string;
+  specialRequests?: string;
 }
 
 export interface Table {
@@ -81,3 +85,4 @@ export interface SalesReport {
   periodEnd: Date;
   transactionCount: number;
 }
+

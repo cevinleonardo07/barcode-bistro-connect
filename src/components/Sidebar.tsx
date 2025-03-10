@@ -12,7 +12,8 @@ import {
   Receipt,
   Menu as MenuIcon,
   X,
-  CreditCard
+  CreditCard,
+  History
 } from 'lucide-react';
 import { Separator } from './ui/separator';
 
@@ -32,7 +33,7 @@ const Sidebar: React.FC = () => {
     { name: 'Tables', path: '/tables', icon: <Users className="w-5 h-5" /> },
     { name: 'Orders', path: '/order-history', icon: <Receipt className="w-5 h-5" /> },
     { name: 'Payments', path: '/payments', icon: <CreditCard className="w-5 h-5" /> },
-    { name: 'Kitchen History', path: '/kitchen-history', icon: <ChefHat className="w-5 h-5" /> }
+    { name: 'Kitchen History', path: '/kitchen-history', icon: <History className="w-5 h-5" /> }
   ];
 
   return (

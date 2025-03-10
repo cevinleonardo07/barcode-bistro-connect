@@ -171,7 +171,9 @@ export const orders: Order[] = [
     status: OrderStatus.COMPLETED,
     totalAmount: 110000,
     createdAt: new Date(2023, 10, 15, 12, 30),
-    updatedAt: new Date(2023, 10, 15, 13, 15)
+    updatedAt: new Date(2023, 10, 15, 13, 15),
+    completionTime: new Date(2023, 10, 15, 13, 0),
+    assignedChef: "Chef Antonio"
   },
   {
     id: "order-1689231433-124",
@@ -220,6 +222,127 @@ export const orders: Order[] = [
     totalAmount: 100000,
     createdAt: new Date(Date.now() - 5 * 60000), // 5 minutes ago
     updatedAt: new Date(Date.now() - 5 * 60000)
+  },
+  {
+    id: "order-1689231433-126",
+    tableNumber: 2,
+    items: [
+      {
+        id: "item-1689231433-129",
+        menuItemId: "m7",
+        name: "Ayam Goreng",
+        price: 38000,
+        quantity: 2,
+        notes: "Extra crispy"
+      },
+      {
+        id: "item-1689231433-130",
+        menuItemId: "m5",
+        name: "Jus Alpukat",
+        price: 18000,
+        quantity: 1
+      }
+    ],
+    status: OrderStatus.COMPLETED,
+    totalAmount: 94000,
+    createdAt: new Date(2023, 10, 14, 18, 30),
+    updatedAt: new Date(2023, 10, 14, 19, 0),
+    completionTime: new Date(2023, 10, 14, 19, 0),
+    assignedChef: "Chef Maria",
+    preparationNotes: "Customer is a regular, made extra crispy as requested"
+  },
+  {
+    id: "order-1689231433-127",
+    tableNumber: 4,
+    items: [
+      {
+        id: "item-1689231433-131",
+        menuItemId: "m8",
+        name: "Sop Buntut",
+        price: 65000,
+        quantity: 1,
+        notes: "No MSG"
+      }
+    ],
+    status: OrderStatus.CANCELLED,
+    totalAmount: 65000,
+    createdAt: new Date(2023, 10, 14, 19, 45),
+    updatedAt: new Date(2023, 10, 14, 19, 50),
+    assignedChef: "Chef Antonio",
+    preparationNotes: "Cancelled due to unavailable ingredients",
+    specialRequests: "Customer has MSG allergy"
+  },
+  {
+    id: "order-1689231433-128",
+    tableNumber: 6,
+    items: [
+      {
+        id: "item-1689231433-132",
+        menuItemId: "m1",
+        name: "Nasi Goreng Special",
+        price: 45000,
+        quantity: 1
+      },
+      {
+        id: "item-1689231433-133",
+        menuItemId: "m3",
+        name: "Sate Ayam",
+        price: 35000,
+        quantity: 1
+      }
+    ],
+    status: OrderStatus.COMPLETED,
+    totalAmount: 80000,
+    createdAt: new Date(2023, 10, 16, 12, 0),
+    updatedAt: new Date(2023, 10, 16, 12, 45),
+    completionTime: new Date(2023, 10, 16, 12, 45),
+    assignedChef: "Chef Maria"
+  },
+  {
+    id: "order-1689231433-129",
+    tableNumber: 3,
+    items: [
+      {
+        id: "item-1689231433-134",
+        menuItemId: "m2",
+        name: "Mie Goreng",
+        price: 40000,
+        quantity: 2
+      }
+    ],
+    status: OrderStatus.COMPLETED,
+    totalAmount: 80000,
+    createdAt: new Date(2023, 10, 16, 13, 15),
+    updatedAt: new Date(2023, 10, 16, 14, 0),
+    completionTime: new Date(2023, 10, 16, 14, 0),
+    assignedChef: "Chef Antonio",
+    specialRequests: "Extra spicy"
+  },
+  {
+    id: "order-1689231433-130",
+    tableNumber: 5,
+    items: [
+      {
+        id: "item-1689231433-135",
+        menuItemId: "m6",
+        name: "Pisang Goreng",
+        price: 25000,
+        quantity: 2
+      },
+      {
+        id: "item-1689231433-136",
+        menuItemId: "m4",
+        name: "Es Teh Manis",
+        price: 10000,
+        quantity: 2
+      }
+    ],
+    status: OrderStatus.CANCELLED,
+    totalAmount: 70000,
+    createdAt: new Date(2023, 10, 17, 16, 0),
+    updatedAt: new Date(2023, 10, 17, 16, 5),
+    assignedChef: "Chef Maria",
+    preparationNotes: "Cancelled by customer"
   }
 ];
 
@@ -389,3 +512,39 @@ export const getTableQRCodeUrl = (tableNumber: number): string => {
   // For this demo, we'll just return a placeholder
   return `/order/${tableNumber}`;
 };
+
+export const getCompletedAndCancelledOrders = (): Order[] => {
+  return orders.filter(order => 
+    order.status === OrderStatus.COMPLETED || 
+    order.status === OrderStatus.CANCELLED
+  ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+export const getOrderPreparationTime = (orderId: string): number | null => {
+  const order = orders.find(o => o.id === orderId);
+  if (!order || !order.completionTime) return null;
+  
+  const orderTime = new Date(order.createdAt).getTime();
+  const completionTime = new Date(order.completionTime).getTime();
+  return (completionTime - orderTime) / (1000 * 60); // in minutes
+};
+
+export const getDelayedOrders = (): Order[] => {
+  return orders.filter(order => {
+    if (!order.completionTime) return false;
+    const prepTime = getOrderPreparationTime(order.id);
+    return prepTime !== null && prepTime > 30; // more than 30 minutes
+  });
+};
+
+export const getOrdersByChef = (chefName: string): Order[] => {
+  return orders.filter(order => 
+    order.assignedChef && 
+    order.assignedChef.toLowerCase() === chefName.toLowerCase()
+  );
+};
+
+// Generate a helmet element to be added to the page
+import { Helmet } from 'react-helmet';
+<lov-add-dependency>react-helmet@6.1.0</lov-add-dependency>
+<lov-add-dependency>@types/react-helmet@6.1.11</lov-add-dependency>
